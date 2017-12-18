@@ -181,20 +181,19 @@ def extract_features(mac, ws, we, data, has_radiotap=True):
 
 # TODO: use np.save and load in future
 if __name__ == '__main__':
-    for i, (dev, mac) in enumerate(zip(all_device_list, mac_list)):
-        for pcap_file in pcaps_switching[dev]:
-            with open('{}/{}.txt'.format(sys.argv[1], os.path.basename(pcap_file)), 'w+') as f:
-                s = ''
-                has_rt = dev not in no_radiotap
-                for tup in gen_samples(pcap_file, mac, has_radiotap=has_rt):
-                    v = map(str, extract_features(mac, *tup, has_radiotap=has_rt))
-                    s += str(i) + ' ' + ' '.join(v) + '\n'
-                f.write(s)
-    """
-    fn = pcaps_switching['cevitor'][0]
-    pktfilter = filter_mac_any(cevitor_mac)
-    pcap = ppcap.Reader(fn, lowest_layer=radiotap.Radiotap,
-                        pktfilter=pktfilter)
+    # for i, (dev, mac) in enumerate(zip(all_device_list, mac_list)):
+    #     for pcap_file in pcaps_switching[dev]:
+    #         with open('{}/{}.txt'.format(sys.argv[1], os.path.basename(pcap_file)), 'w+') as f:
+    #             s = ''
+    #             has_rt = dev not in no_radiotap
+    #             for tup in gen_samples(pcap_file, mac, has_radiotap=has_rt):
+    #                 v = map(str, extract_features(mac, *tup, has_radiotap=has_rt))
+    #                 s += str(i) + ' ' + ' '.join(v) + '\n'
+    #             f.write(s)
+    
+    fn = './captures/cevitor/cevitor_qswitch.pcap'
+    # pktfilter = filter_mac_any(cevitor_mac)
+    pcap = ppcap.Reader(fn, lowest_layer=radiotap.Radiotap)
     for ts, data in pcap:
-        print(data)
-    """
+        print(data.ieee80211.upper_layer.src_s, data.ieee80211.upper_layer.dst_s)
+    
