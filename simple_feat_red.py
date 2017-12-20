@@ -2,6 +2,8 @@ import numpy as np
 import os
 import sys
 
+from statsmodels.stats.outliers_influence import variance_inflation_factor
+
 features = ["class"] +\
            ["ratetot_num", "ratetot_sz"] +\
            ["ratet_num_" + str(i) for i in range(3)] +\
@@ -12,6 +14,12 @@ features = ["class"] +\
            ["fract_sz_" + str(i) for i in range(3)] +\
            ["frac_num_" + str(i) for i in range(64)] +\
            ["frac_sz_" + str(i) for i in range(64)] +\
+           ["rrattot_num", "rrattot_sz"]+\
+           ["rratt_num_" + str(i) for i in range(3)] +\
+           ["rratt_sz_" + str(i) for i in range(3)] +\
+           ["rrat_num_" + str(i) for i in range(64)] +\
+           ["rrat_sz_" + str(i) for i in range(64)] +\
+           ["srattot_num", "srattot_sz"]+\
            ["sratt_num_" + str(i) for i in range(3)] +\
            ["sratt_sz_" + str(i) for i in range(3)] +\
            ["srat_num_" + str(i) for i in range(64)] +\
@@ -33,7 +41,7 @@ if __name__ == '__main__':
     for fn in files:
         curr_array = []
         with open(os.path.join(feature_path, fn)) as f:
-            curr_array.extend(map(lambda l: l.strip().split(), f.readlines()))
+            curr_array.extend(map(lambda l: list(map(float, l.strip().split())), f.readlines()))
         data_array.append(curr_array)
         comb_array += curr_array
 
@@ -42,7 +50,7 @@ if __name__ == '__main__':
     remaining = [feat for i, feat in enumerate(features) if i not in zeros][1:]
 
     print("Remaining Features: ")
-    print(remaining)
+    print(remaining, len(remaining))
 
     with open(header_path, 'w+') as f:
         for feat in remaining:
@@ -52,5 +60,5 @@ if __name__ == '__main__':
         with open(os.path.join(reduced_path, fn), 'w+') as f:
             arr = data_array[i]
             arr = np.delete(arr, zeros, axis=1)
-            f.write('\n'.join(map(lambda r: ' '.join(r), arr)))
+            f.write('\n'.join(map(lambda r: ' '.join(map(str, r)), arr)))
             f.write('\n')

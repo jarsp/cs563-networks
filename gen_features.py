@@ -83,16 +83,22 @@ def extract_features(mac, ws, we, data):
     ctot_sz = np.zeros(1)
     stot_num = np.zeros(1)
     stot_sz = np.zeros(1)
+    rtot_num = np.zeros(1)
+    rtot_sz = np.zeros(1)
     l2tot_sz = np.zeros(1)
     ct_num = np.zeros(3)
     ct_sz = np.zeros(3)
     st_num = np.zeros(3)
     st_sz = np.zeros(3)
+    rt_num = np.zeros(3)
+    rt_sz = np.zeros(3)
     l2t_sz = np.zeros(3)
     c_num = np.zeros(64)
     c_sz = np.zeros(64)
     s_num = np.zeros(64)
     s_sz = np.zeros(64)
+    r_num = np.zeros(64)
+    r_sz = np.zeros(64)
 
     sts = None
     for ts, pkt in data:
@@ -106,6 +112,7 @@ def extract_features(mac, ws, we, data):
 
         try:
             is_src = hasattr(ieee.upper_layer, 'src') and ieee.upper_layer.src == mac_bytes
+            is_dst = hasattr(ieee.upper_layer, 'dst') and ieee.upper_layer.dst == mac_bytes
         except:
             print('Skipped packet:', mac, (ts - sts)/(10**9))
             continue
@@ -118,6 +125,15 @@ def extract_features(mac, ws, we, data):
             stot_sz += l
             st_sz[tp] += l
             s_sz[stp] += l
+
+        if is_dst:
+            rtot_num += 1
+            rt_num[tp] += 1
+            r_num[stp] += 1
+
+            rtot_sz += l
+            rt_sz[tp] += l
+            r_sz[stp] += l
 
         ctot_num += 1
         ct_num[tp] += 1
@@ -140,10 +156,21 @@ def extract_features(mac, ws, we, data):
     frac_sz = c_sz/ctot_sz
 
     # Use stot_num, stot_sz somewhere?
+    srattot_num = stot_num/ctot_num
+    srattot_sz = stot_sz/ctot_sz
+
     sratt_num = st_num/ct_num
     sratt_sz = st_sz/ct_sz
     srat_num = s_num/c_num
     srat_sz = s_sz/c_sz
+
+    rrattot_num = rtot_num/ctot_num
+    rrattot_sz = rtot_sz/ctot_sz
+
+    rratt_num = rt_num/ct_num
+    rratt_sz = rt_sz/ct_sz
+    rrat_num = r_num/c_num
+    rrat_sz = r_sz/c_sz
 
     ltot_sz = ctot_sz/ctot_num
     lt_sz = ct_sz/ct_num
@@ -170,7 +197,8 @@ def extract_features(mac, ws, we, data):
     vec = list(map(np.nan_to_num,
                    chain(ratetot_num, ratetot_sz, ratet_num, ratet_sz, rate_num, rate_sz,
                          fract_num, fract_sz, frac_num, frac_sz,
-                         sratt_num, sratt_sz, srat_num, srat_sz,
+                         rrattot_num, rrattot_sz, sratt_num, sratt_sz, srat_num, srat_sz,
+                         srattot_num, srattot_sz, rratt_num, rratt_sz, rrat_num, rrat_sz,
                          ltot_sz, lt_sz, l_sz,
                          sdtot_sz, sdt_sz, sd_sz)))
 
@@ -186,13 +214,3 @@ if __name__ == '__main__':
                     v = map(str, extract_features(mac, *tup))
                     s += str(i) + ' ' + ' '.join(v) + '\n'
                 f.write(s)
-
-"""
-    pcap = ppcap.Reader('./captures/tuya/tuya_qswitch.pcap', lowest_layer=radiotap.Radiotap)
-    sts = None
-    for ts, pkt in pcap:
-        sts = ts if sts is None else sts
-        print("===============================")
-        print(pkt.ieee80211)
-        print((ts - sts)/(10**9), pkt.ieee80211.upper_layer)
-"""
