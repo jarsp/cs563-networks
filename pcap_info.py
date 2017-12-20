@@ -54,3 +54,51 @@ for dev in actuated_device_list:
                               '{}_qswitch.pcap'.format(dev))]
 
 pcaps['pc'] = [os.path.join(pcap_dir, 'pc/browsing_video.pcap')]
+
+# Frame type info
+frame_types = {i:'Unknown/Reserved' for i in range(64)}
+
+frame_types[0b000000] = 'Management - Association Request'
+frame_types[0b000100] = 'Management - Association Response'
+frame_types[0b001000] = 'Management - Re-Association Request'
+frame_types[0b001100] = 'Management - Re-Association Response'
+frame_types[0b010000] = 'Management - Probe Request'
+frame_types[0b010100] = 'Management - Probe Response'
+frame_types[0b011000] = 'Management - Timing Advertisement'
+frame_types[0b011100] = 'Management - Reserved'
+frame_types[0b100000] = 'Management - Beacon'
+frame_types[0b100100] = 'Management - ATIM'
+frame_types[0b101000] = 'Management - Disassociation'
+frame_types[0b101100] = 'Management - Authentication'
+frame_types[0b110000] = 'Management - Deauthentication'
+frame_types[0b110100] = 'Management - Action'
+frame_types[0b111000] = 'Management - Action no Ack'
+frame_types[0b111100] = 'Management - Reserved'
+
+frame_types[0b011101] = 'Control - Control Wrapper'
+frame_types[0b100001] = 'Control - Block Ack Request'
+frame_types[0b100101] = 'Control - Block Ack'
+frame_types[0b101001] = 'Control - PS-Poll'
+frame_types[0b101101] = 'Control - RTS'
+frame_types[0b110001] = 'Control - CTS'
+frame_types[0b110101] = 'Control - ACK'
+frame_types[0b111001] = 'Control - CF-End'
+frame_types[0b111101] = 'Control - CF-End + CF-Ack'
+
+frame_types[0b000010] = 'Data - Data'
+frame_types[0b000110] = 'Data - Data + CF-Ack'
+frame_types[0b001010] = 'Data - Data + CF-Poll'
+frame_types[0b001110] = 'Data - Data + CF-Ack + CF-Poll'
+frame_types[0b010010] = 'Data - Null'
+frame_types[0b010110] = 'Data - CF-Ack'
+frame_types[0b011010] = 'Data - CF-Poll'
+frame_types[0b011110] = 'Data - CF-Ack + CF-Poll'
+frame_types[0b100010] = 'Data - QoS Data'
+frame_types[0b100110] = 'Data - QoS Data + CF-Ack'
+frame_types[0b101010] = 'Data - QoS Data + CF-Poll'
+frame_types[0b101110] = 'Data - QoS Data + CF-Ack + CF-Poll'
+frame_types[0b110010] = 'Data - QoS Null'
+frame_types[0b110110] = 'Data - Reserved'
+frame_types[0b111010] = 'Data - QoS CF-Poll'
+frame_types[0b111110] = 'Data - QoS CF-Ack + CF-Poll'
+

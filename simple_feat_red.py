@@ -20,8 +20,8 @@ features = ["class"] +\
            ["lt_sz_" + str(i) for i in range(3)] +\
            ["l_sz_" + str(i) for i in range(64)] +\
            ["sdtot"] +\
-           ["sdt_sz" + str(i) for i in range(3)] +\
-           ["sd_sz" + str(i) for i in range(64)]
+           ["sdt_sz_" + str(i) for i in range(3)] +\
+           ["sd_sz_" + str(i) for i in range(64)]
 
 if __name__ == '__main__':
     feature_path = sys.argv[1]
