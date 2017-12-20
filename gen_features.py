@@ -67,14 +67,8 @@ def time_slice_pcap(pcap, window, step):
     if len(window_buf) != 0:
         yield curr_window, curr_window + window, list(window_buf)
 
-def gen_samples(pcap_name, mac, window=25, step=1, is_time_slice=True, has_radiotap=True):
-    pktfilter = filter_mac_any(mac)
-    if has_radiotap:
-        pcap = ppcap.Reader(pcap_name, lowest_layer=radiotap.Radiotap,
-                            pktfilter=pktfilter)
-    else:
-        pcap = ppcap.Reader(pcap_name, lowest_layer=ieee80211.IEEE80211,
-                            pktfilter=pktfilter)
+def gen_samples(pcap_name, mac, window=25, step=1, is_time_slice=True):
+    pcap = ppcap.Reader(pcap_name, lowest_layer=radiotap.Radiotap)
 
     if is_time_slice:
         return time_slice_pcap(pcap, window, step)
@@ -82,7 +76,7 @@ def gen_samples(pcap_name, mac, window=25, step=1, is_time_slice=True, has_radio
         return pkt_slice_pcap(pcap, window, step)
 
 # TODO: Make more modular
-def extract_features(mac, ws, we, data, has_radiotap=True):
+def extract_features(mac, ws, we, data):
     mac_bytes = mac_str_to_bytes(mac)
     w = we - ws
     ctot_num = np.zeros(1)
@@ -100,15 +94,30 @@ def extract_features(mac, ws, we, data, has_radiotap=True):
     s_num = np.zeros(64)
     s_sz = np.zeros(64)
 
+    sts = None
     for ts, pkt in data:
-        try:
-            ieee = pkt.ieee80211 if has_radiotap else pkt
-        except:
-            continue
+        sts = ts if sts is None else sts
+
+        ieee = pkt.ieee80211
         l = len(ieee)
         ll = l*l
         tp = ieee.type
         stp = (ieee.subtype << 2) | ieee.type
+
+        try:
+            is_src = hasattr(ieee.upper_layer, 'src') and ieee.upper_layer.src == mac_bytes
+        except:
+            print('Skipped packet:', mac, (ts - sts)/(10**9))
+            continue
+
+        if is_src:
+            stot_num += 1
+            st_num[tp] += 1
+            s_num[stp] += 1
+
+            stot_sz += l
+            st_sz[tp] += l
+            s_sz[stp] += l
 
         ctot_num += 1
         ct_num[tp] += 1
@@ -117,15 +126,6 @@ def extract_features(mac, ws, we, data, has_radiotap=True):
         ctot_sz += l
         ct_sz[tp] += l
         c_sz[stp] += l
-
-        if hasattr(ieee.upper_layer, 'src') and ieee.upper_layer.src == mac_bytes:
-            stot_num += 1
-            st_num[tp] += 1
-            s_num[stp] += 1
-
-            stot_sz += l
-            st_sz[tp] += l
-            s_sz[stp] += l
 
     ratetot_num = ctot_num/w
     ratetot_sz = ctot_sz/w
@@ -154,10 +154,7 @@ def extract_features(mac, ws, we, data, has_radiotap=True):
     sd_sz = np.zeros(64)
 
     for ts, pkt in data:
-        try:
-            ieee = pkt.ieee80211 if has_radiotap else pkt
-        except:
-            continue
+        ieee = pkt.ieee80211
         l = len(ieee)
         tp = ieee.type
         stp = (ieee.subtype << 2) | ieee.type
@@ -181,19 +178,21 @@ def extract_features(mac, ws, we, data, has_radiotap=True):
 
 # TODO: use np.save and load in future
 if __name__ == '__main__':
-    # for i, (dev, mac) in enumerate(zip(all_device_list, mac_list)):
-    #     for pcap_file in pcaps_switching[dev]:
-    #         with open('{}/{}.txt'.format(sys.argv[1], os.path.basename(pcap_file)), 'w+') as f:
-    #             s = ''
-    #             has_rt = dev not in no_radiotap
-    #             for tup in gen_samples(pcap_file, mac, has_radiotap=has_rt):
-    #                 v = map(str, extract_features(mac, *tup, has_radiotap=has_rt))
-    #                 s += str(i) + ' ' + ' '.join(v) + '\n'
-    #             f.write(s)
-    
-    fn = './captures/cevitor/cevitor_qswitch.pcap'
-    # pktfilter = filter_mac_any(cevitor_mac)
-    pcap = ppcap.Reader(fn, lowest_layer=radiotap.Radiotap)
-    for ts, data in pcap:
-        print(data.ieee80211.upper_layer.src_s, data.ieee80211.upper_layer.dst_s)
-    
+    for i, (dev, mac) in enumerate(zip(all_device_list, mac_list)):
+        for pcap_file in pcaps[dev]:
+            with open('{}/{}.txt'.format(sys.argv[1], os.path.basename(pcap_file)), 'w+') as f:
+                s = ''
+                for tup in gen_samples(pcap_file, mac):
+                    v = map(str, extract_features(mac, *tup))
+                    s += str(i) + ' ' + ' '.join(v) + '\n'
+                f.write(s)
+
+"""
+    pcap = ppcap.Reader('./captures/tuya/tuya_qswitch.pcap', lowest_layer=radiotap.Radiotap)
+    sts = None
+    for ts, pkt in pcap:
+        sts = ts if sts is None else sts
+        print("===============================")
+        print(pkt.ieee80211)
+        print((ts - sts)/(10**9), pkt.ieee80211.upper_layer)
+"""
